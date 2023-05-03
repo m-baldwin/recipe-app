@@ -43,23 +43,8 @@ nav {
   padding-block: 0.25rem;
 }
 
-.favourite-btn::after {
-  content: "";
-  position: absolute;
-  width: 0%;
-  background-color: black;
-  height: 2px;
-  bottom: 0;
-  left: 0;
-  transition: width 0.3s ease;
-}
-
 .favourite-btn:hover {
   cursor: pointer;
-}
-
-.favourite-btn:hover::after {
-  width: 100%;
 }
 
 form {
@@ -95,6 +80,20 @@ input:focus {
   top: 35px;
   left: 30px;
   color: rgb(192, 8, 8);
+}
+
+.fav-err-msg {
+  text-align: center;
+  align-items: center;
+  margin-top: 10rem;
+}
+
+.main-section {
+  margin-top: 3rem;
+}
+
+.sub-heading {
+  text-align: center;
 }
 
 .card-container {
@@ -152,6 +151,7 @@ input:focus {
 
 .fa-solid {
   --fa-animation-iteration-count: 1;
+  color: #be2323;
 }
 
 .load {

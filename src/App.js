@@ -4,14 +4,22 @@ import Card from "./components/Card";
 import Header from "./components/Header";
 import Nutritiontable from "./components/NutritionTable";
 import IngredientsHeader from "./components/IngredientsHeader";
-import Favourites from "./components/Favourites";
+import HeartIcon from "./components/HeartIcon";
 
 function App() {
   const apiKey = "0c2f184d291646fe96d86bcc9ba52623";
 
-  const [recipes, setRecipes] = useState([]);
+  const [recipes, setRecipes] = useState([
+    {
+      id: "",
+      title: "",
+      image: "",
+    },
+  ]);
+  const [favouriteArr, setFavouriteArr] = useState([]);
   const [search, setSearch] = useState("");
   const [showFavourites, setShowFavourites] = useState(false);
+  const [showHomePage, setShowHomePage] = useState(true);
   let [numberOfItems, setNumberOfItems] = useState(10);
   const [errorMessage, setErrorMessage] = useState("");
   const [ingredients, setIngredients] = useState({
@@ -29,8 +37,75 @@ function App() {
     },
   });
 
+  console.log(favouriteArr.map((fav) => fav.title));
+
+  function addToFavourites(id) {
+    setFavouriteArr((prevFavourites) => {
+      const index = prevFavourites.findIndex((recipe) => recipe.id === id);
+      if (index === -1) {
+        const recipeToAdd = recipes.find((recipe) => recipe.id === id);
+        const updatedFavourites = [...prevFavourites, recipeToAdd];
+        localStorage.setItem("favouriteArr", JSON.stringify(updatedFavourites));
+        return updatedFavourites;
+      } else {
+        const updatedFavourites = [...prevFavourites];
+        updatedFavourites.splice(index, 1);
+        localStorage.setItem("favouriteArr", JSON.stringify(updatedFavourites));
+        return updatedFavourites;
+      }
+    });
+  }
+
+  useEffect(() => {
+    const favouriteArrString = localStorage.getItem("favouriteArr");
+    if (favouriteArrString) {
+      const favouriteArr = JSON.parse(favouriteArrString);
+      setFavouriteArr(favouriteArr);
+    }
+  }, []);
+
+  function toggleHomePage() {
+    setIngredients({
+      title: "",
+      image: [],
+      ingredient: [],
+      instructions: "",
+      servings: "",
+      timeToCook: "",
+      nutritions: {
+        calories: "",
+        protein: "",
+        fat: "",
+        carbs: "",
+      },
+    });
+    setShowFavourites(false);
+    if (showHomePage === true) {
+      setShowHomePage(true);
+      setSearch("");
+    } else {
+      setShowHomePage(true);
+      setSearch(search);
+    }
+  }
+
   function toggleFavouritePage() {
-    return setShowFavourites(!showFavourites);
+    setIngredients({
+      title: "",
+      image: [],
+      ingredient: [],
+      instructions: "",
+      servings: "",
+      timeToCook: "",
+      nutritions: {
+        calories: "",
+        protein: "",
+        fat: "",
+        carbs: "",
+      },
+    });
+    setShowFavourites(true);
+    setShowHomePage(false);
   }
 
   function getMoreRecipes() {
@@ -52,6 +127,12 @@ function App() {
         carbs: "",
       },
     });
+    if (showFavourites === true) {
+      setShowFavourites(true);
+    } else {
+      setShowHomePage(true);
+    }
+    window.scrollTo(0, 0);
   }
 
   function getIngredients(id) {
@@ -105,6 +186,7 @@ function App() {
             carbs: nutrition.carbs,
           },
         });
+        window.scrollTo(0, 0);
       })
       .catch((error) => {
         console.error("Error:", error);
@@ -116,7 +198,7 @@ function App() {
 
     fetch(
       search === ""
-        ? `https://api.spoonacular.com/recipes/complexSearch?sort=random&number=1`
+        ? `https://api.spoonacular.com/recipes/complexSearch?sort=random&number=100`
         : `https://api.spoonacular.com/recipes/complexSearch?query=${search}&sort=random&number=100`,
       {
         method: "GET",
@@ -135,11 +217,15 @@ function App() {
       .then((result) => {
         if (result.results.length === 0) {
           setErrorMessage("No matching recipes found.");
-          setTimeout(() => {
-            setErrorMessage("");
-          }, 3000);
         } else {
-          setRecipes(result.results);
+          const foodItem = result.results.map((food) => ({
+            id: food.id,
+            title: food.title,
+            image: food.image,
+          }));
+          setRecipes(foodItem);
+          setErrorMessage("");
+          window.scrollTo(0, 0);
         }
       })
       .catch((error) => {
@@ -150,40 +236,76 @@ function App() {
   return (
     <div className="app">
       <Header
+        showFavourites={showFavourites}
         setIngredients={setIngredients}
         setSearch={setSearch}
         error={errorMessage}
-        onClick={toggleFavouritePage}
+        favouritePage={toggleFavouritePage}
         setShowFavourites={setShowFavourites}
+        homePage={toggleHomePage}
+        showHomePage={showHomePage}
       />
 
-      {/* Render the favourites page */}
-      {showFavourites ? (
-        <Favourites />
-      ) : /* Else render the main Page */
-      ingredients.ingredient.length === 0 ? (
-        <>
-          <div className="card-container">
-            {recipes.slice(0, numberOfItems).map((food, i) => {
-              return (
-                <Card
-                  key={i}
-                  title={food.title}
-                  img={food.image}
-                  onClick={() => getIngredients(food.id)}
-                />
-              );
-            })}
-          </div>
-          {numberOfItems < recipes.length && (
-            <div className="load">
-              <button onClick={getMoreRecipes} className="load-btn">
-                Load More
-              </button>
+      {ingredients.ingredient.length === 0 ? (
+        showFavourites ? (
+          <section className="main-section">
+            <h2 className="sub-heading">Favourites Page</h2>
+            {favouriteArr.length === 0 ? (
+              <h5 className="fav-err-msg">You Currently Have No favourites</h5>
+            ) : (
+              <div className="card-container">
+                {favouriteArr.map((fav, i) => {
+                  console.log(fav.title);
+                  return (
+                    <Card
+                      key={i}
+                      title={fav.title}
+                      img={fav.image}
+                      icon=<HeartIcon className="fa-solid fa-heart fa-2xl" />
+                      favourites={() => addToFavourites(fav.id)}
+                      onClick={() => getIngredients(fav.id)}
+                    />
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        ) : (
+          <section className="main-section">
+            {errorMessage === "" && <h2 className="sub-heading">{search}</h2>}
+
+            <div className="card-container">
+              {recipes.slice(0, numberOfItems).map((food, i) => {
+                return (
+                  <Card
+                    key={i}
+                    title={food.title}
+                    img={food.image}
+                    icon={
+                      favouriteArr.find((recipe) => recipe.id === food.id) ? (
+                        <HeartIcon className="fa-solid fa-heart fa-beat fa-2xl" />
+                      ) : (
+                        <HeartIcon className="fa-heart fa-regular fa-2xl" />
+                      )
+                    }
+                    favourites={() => addToFavourites(food.id)}
+                    onClick={() => getIngredients(food.id)}
+                  />
+                );
+              })}
             </div>
-          )}
-        </>
+            {numberOfItems < recipes.length && (
+              <div className="load">
+                <button onClick={getMoreRecipes} className="load-btn">
+                  Load More
+                </button>
+              </div>
+            )}
+          </section>
+        )
       ) : (
+        /* Else render the in Page */
+
         <div className="instructions-container">
           <IngredientsHeader
             title={ingredients.title}
@@ -206,7 +328,6 @@ function App() {
               cals={ingredients.nutritions.calories}
             />
           </section>
-
           <div className="instructions">
             <h3>Instructions</h3>
             <ol>
@@ -215,14 +336,12 @@ function App() {
               })}
             </ol>
           </div>
-
           <div className="extra-info">
             <p>Serves {ingredients.servings} People</p>
             <p>Cook Duration: {ingredients.timeToCook} Minutes</p>
           </div>
-
           <button className="back-btn" onClick={goBack}>
-            Go back
+            Go Back
           </button>
         </div>
       )}

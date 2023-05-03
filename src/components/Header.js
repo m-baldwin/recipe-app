@@ -32,10 +32,25 @@ function Header(props) {
   return (
     <header>
       <div className="title">
-        <h1>Baldwinos</h1>
+        <h1>Cook Companion</h1>
       </div>
       <nav>
-        <button onClick={props.onClick} className="favourite-btn">
+        <button
+          style={{
+            borderBottom: props.showHomePage ? "2px solid black" : "none",
+          }}
+          onClick={props.homePage}
+          className="favourite-btn"
+        >
+          Home
+        </button>
+        <button
+          style={{
+            borderBottom: props.showFavourites ? "2px solid black" : "none",
+          }}
+          onClick={props.favouritePage}
+          className="favourite-btn"
+        >
           Favourites
         </button>
         <form onSubmit={searchFood}>
